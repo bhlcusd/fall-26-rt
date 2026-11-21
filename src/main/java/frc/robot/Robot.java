@@ -26,8 +26,10 @@ import frc.robot.constants.Constants;
 import frc.robot.devices.controller.OI;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.arm.Arm;
-import frc.robot.subsystems.arm.ArmControls;
+// import frc.robot.subsystems.arm.ArmControls;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.dualArms.DualArm;
+import frc.robot.subsystems.dualArms.DualArmControls;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.obstacles.ObstacleAvoidance;
 import frc.robot.subsystems.tracking.Tracking;
@@ -54,6 +56,7 @@ public class Robot extends LoggedRobot {
 
     private Drive drive;
     private Elevator elevator;
+    private DualArm dualArm;
     private Arm arm;
     private Vision vision;
     private Tracking tracking;
@@ -140,6 +143,7 @@ public class Robot extends LoggedRobot {
         }
         superstructure.periodic();
         elevator.periodic();
+        dualArm.periodic();
         arm.periodic();
         obstacles.periodic();
         tracking.periodic();
@@ -217,11 +221,13 @@ public class Robot extends LoggedRobot {
         elevator = Elevator.getInstance();
         obstacles = ObstacleAvoidance.getInstance();
         drive = Drive.getInstance();
+        dualArm = DualArm.getInstance();
         arm = Arm.getInstance();
         vision = Vision.getInstance();
         tracking = Tracking.getInstance();
         superstructure = SS.getInstance();
-        controls = new ArmControls(arm);
+        controls = new DualArmControls(dualArm);
+        // controls = new ArmControls(arm);
         // controls = new ControlScheme(superstructure, drive);
         autoSelector = new AutoSelector();
     }
