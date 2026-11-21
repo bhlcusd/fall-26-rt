@@ -16,7 +16,9 @@ public class DualArm extends SubsystemBase<DualArm.Command> {
 		DISABLED,
 		IDLE,
 		RAISE,
-		LOWER
+		LOWER,
+		INAKE,
+		EXPEL
 	}
 
 	public enum Travel {
@@ -28,6 +30,9 @@ public class DualArm extends SubsystemBase<DualArm.Command> {
 
 	private final Motor leftMotor;
 	private final Motor rightMotor;
+
+	private final Motor rollerLeft;
+	private final Motor rollerRight;
 
 	private double leftAngle_deg;
 	private double rightAngle_deg;
@@ -58,6 +63,30 @@ public class DualArm extends SubsystemBase<DualArm.Command> {
 			.withSim(DC_MOTOR_RIGHT, GEARING_RIGHT, SIM_MOI_RIGHT_kgm2);
 
 		this.rightMotor = new Motor("rightMotor", rightConfig);
+
+		MotorConfig leftRollerConfig = new MotorConfig(LEFT_MOTOR_ID)
+			.withCanbus(CANBUS_LEFT)
+			.withBrake(BRAKE_LEFT)
+			.withFoc(FOC_LEFT)
+			.withSensorToMechanismRatio(SENSOR_TO_MECHANISM_RATIO_LEFT)
+			.withPIDGains(kPLeft, kILeft, kDLeft, GRAVITY_LEFT)
+			.withMotionMagic(CRUISE_VELOCITY_LEFT_degps, ACCELERATION_LEFT_degps2, JERK_LEFT_degp3)
+			.withSim(DC_MOTOR_LEFT, GEARING_LEFT, SIM_MOI_LEFT_kgm2);
+		
+		this.rollerLeft = new Motor("rollerLeft", leftRollerConfig);
+
+		MotorConfig rightRollerConfig = new MotorConfig(LEFT_MOTOR_ID)
+			.withCanbus(CANBUS_LEFT)
+			.withBrake(BRAKE_LEFT)
+			.withFoc(FOC_LEFT)
+			.withSensorToMechanismRatio(SENSOR_TO_MECHANISM_RATIO_LEFT)
+			.withPIDGains(kPLeft, kILeft, kDLeft, GRAVITY_LEFT)
+			.withMotionMagic(CRUISE_VELOCITY_LEFT_degps, ACCELERATION_LEFT_degps2, JERK_LEFT_degp3)
+			.withSim(DC_MOTOR_LEFT, GEARING_LEFT, SIM_MOI_LEFT_kgm2);
+		
+		this.rollerRight = new Motor("rollerRIght", rightRollerConfig);
+		
+		setCommand(Command.IDLE);
 	}
 
 	public static DualArm getInstance() {
@@ -138,6 +167,11 @@ public class DualArm extends SubsystemBase<DualArm.Command> {
 						throw new IllegalArgumentException("DualArm: Unknown substate: " + getSubstate());
 				}
 				break;
+			case INAKE:
+				
+				break;
+			case EXPEL:
+				break;
 			default:
 				throw new IllegalArgumentException("DualArm: handling invalid state: " + getCommand());
 		}
@@ -167,5 +201,13 @@ public class DualArm extends SubsystemBase<DualArm.Command> {
 
 	public void lower() {
 		setCommand(Command.LOWER);
+	}
+
+	public void intake() {
+		setCommand(Command.INAKE);
+	}
+
+	public void expel() {
+		setCommand(Command.EXPEL);
 	}
 }
