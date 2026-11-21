@@ -21,11 +21,11 @@ public class DualArmControls extends Controls {
 		}
 
 		if (OI.DR.getXButtonPressed()) {
-
+			dualArm.intake();
 		}
 
 		if (OI.DR.getYButtonPressed()) {
-			
+			dualArm.expel();
 		}
 	}
 }

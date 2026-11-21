@@ -13,7 +13,6 @@
 
 package frc.robot;
 
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Threads;
@@ -48,7 +47,6 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
 
-
 public class Robot extends LoggedRobot {
     private static final int THREAD_PRIORITY_CRITICAL = 99;
     private static final int THREAD_PRIORITY_NORMAL = 10;
@@ -65,7 +63,6 @@ public class Robot extends LoggedRobot {
     private Controls controls;
     private AutoSelector autoSelector;
     private Auto auto;
-
 
     @Override
     public void robotInit() {
@@ -160,6 +157,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void disabledInit() {
+        dualArm.disable();
     }
 
     @Override
@@ -184,6 +182,8 @@ public class Robot extends LoggedRobot {
         if (Constants.currentMode != Constants.Mode.SIM) {
             vision.enable();
         }
+        
+        dualArm.idle();
     }
 
     @Override
@@ -194,6 +194,8 @@ public class Robot extends LoggedRobot {
     public void teleopInit() {
         vision.enable();
         controls.init();
+
+        dualArm.idle();
     }
 
     @Override
@@ -215,7 +217,6 @@ public class Robot extends LoggedRobot {
     @Override
     public void simulationPeriodic() {
     }
-
     
     public void instantiateSubsystems() {
         elevator = Elevator.getInstance();

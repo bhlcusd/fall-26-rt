@@ -8,206 +8,227 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.devices.motor.Motor;
 import frc.robot.devices.motor.MotorConfig;
 import frc.robot.subsystems.SubsystemBase;
-import frc.robot.util.Util;
 
-// TODO: Add rollers to arms - add two more motors called leftRoller and rightRoller; add to DualArm2d as well. Have seperate keybind X and Y to roll rollers forwards and backwards, respectively
 public class DualArm extends SubsystemBase<DualArm.Command> {
-	public enum Command {
-		DISABLED,
-		IDLE,
-		RAISE,
-		LOWER,
-		INAKE,
-		EXPEL
-	}
+    public enum Command {
+        DISABLED,
+        IDLE,
+        RAISE,
+        LOWER,
+        INAKE,
+        EXPEL
+    }
 
-	public enum Travel {
-		PHASE_1,
-		PHASE_2
-	}
+    public enum Travel {
+        PHASE_1,
+        PHASE_2
+    }
 
-	private final DualArm2d dualArm2d = new DualArm2d("DualArm2d", new Color8Bit(255, 0, 0));
+    private final DualArm2d dualArm2d = new DualArm2d("DualArm2d", new Color8Bit(255, 0, 0));
 
-	private final Motor leftMotor;
-	private final Motor rightMotor;
+    private final Motor leftMotor;
+    private final Motor rightMotor;
 
-	private final Motor rollerLeft;
-	private final Motor rollerRight;
+    private final Motor rollerLeft;
+    private final Motor rollerRight;
 
-	private double leftAngle_deg;
-	private double rightAngle_deg;
+    private double leftAngle_deg;
+    private double rightAngle_deg;
 
-	private static DualArm instance;
+    private double leftTarget_deg;
+    private double rightTarget_deg;
 
-	private DualArm() {
-		super("DualArm");
+    private static DualArm instance;
 
-		MotorConfig leftConfig = new MotorConfig(LEFT_MOTOR_ID)
-			.withCanbus(CANBUS_LEFT)
-			.withBrake(BRAKE_LEFT)
-			.withFoc(FOC_LEFT)
-			.withSensorToMechanismRatio(SENSOR_TO_MECHANISM_RATIO_LEFT)
-			.withPIDGains(kPLeft, kILeft, kDLeft, GRAVITY_LEFT)
-			.withMotionMagic(CRUISE_VELOCITY_LEFT_degps, ACCELERATION_LEFT_degps2, JERK_LEFT_degp3)
-			.withSim(DC_MOTOR_LEFT, GEARING_LEFT, SIM_MOI_LEFT_kgm2);
+    private DualArm() {
+        super("DualArm");
 
-		this.leftMotor = new Motor("leftMotor", leftConfig);
+        MotorConfig leftConfig = new MotorConfig(LEFT_MOTOR_ID)
+            .withCanbus(CANBUS_LEFT)
+            .withInverted(INVERTED_LEFT)
+            .withBrake(BRAKE_LEFT)
+            .withFoc(FOC_LEFT)
+            .withMeasurementUnit(UNIT_LEFT)
+            .withSensorToMechanismRatio(SENSOR_TO_MECHANISM_RATIO_LEFT)
+            .withPIDGains(kPLeft, kILeft, kDLeft, GRAVITY_LEFT)
+            .withMotionMagic(CRUISE_VELOCITY_LEFT_degps, ACCELERATION_LEFT_degps2, JERK_LEFT_degp3)
+            .withSim(DC_MOTOR_LEFT, GEARING_LEFT, SIM_MOI_LEFT_kgm2);
 
-		MotorConfig rightConfig = new MotorConfig(RIGHT_MOTOR_ID)
-			.withCanbus(CANBUS_RIGHT)
-			.withBrake(BRAKE_RIGHT)
-			.withFoc(FOC_RIGHT)
-			.withSensorToMechanismRatio(SENSOR_TO_MECHANISM_RATIO_RIGHT)
-			.withPIDGains(kPRight, kIRight, kDRight, GRAVITY_RIGHT)
-			.withMotionMagic(CRUISE_VELOCITY_RIGHT_degps, ACCELERATION_RIGHT_degps2, JERK_RIGHT_degp3)
-			.withSim(DC_MOTOR_RIGHT, GEARING_RIGHT, SIM_MOI_RIGHT_kgm2);
+        this.leftMotor = new Motor("leftMotor", leftConfig);
 
-		this.rightMotor = new Motor("rightMotor", rightConfig);
+        MotorConfig rightConfig = new MotorConfig(RIGHT_MOTOR_ID)
+            .withCanbus(CANBUS_RIGHT)
+            .withInverted(INVERTED_RIGHT)
+            .withBrake(BRAKE_RIGHT)
+            .withFoc(FOC_RIGHT)
+            .withMeasurementUnit(UNIT_RIGHT)
+            .withSensorToMechanismRatio(SENSOR_TO_MECHANISM_RATIO_RIGHT)
+            .withPIDGains(kPRight, kIRight, kDRight, GRAVITY_RIGHT)
+            .withMotionMagic(CRUISE_VELOCITY_RIGHT_degps, ACCELERATION_RIGHT_degps2, JERK_RIGHT_degp3)
+            .withSim(DC_MOTOR_RIGHT, GEARING_RIGHT, SIM_MOI_RIGHT_kgm2);
 
-		MotorConfig leftRollerConfig = new MotorConfig(LEFT_MOTOR_ID)
-			.withCanbus(CANBUS_LEFT)
-			.withBrake(BRAKE_LEFT)
-			.withFoc(FOC_LEFT)
-			.withSensorToMechanismRatio(SENSOR_TO_MECHANISM_RATIO_LEFT)
-			.withPIDGains(kPLeft, kILeft, kDLeft, GRAVITY_LEFT)
-			.withMotionMagic(CRUISE_VELOCITY_LEFT_degps, ACCELERATION_LEFT_degps2, JERK_LEFT_degp3)
-			.withSim(DC_MOTOR_LEFT, GEARING_LEFT, SIM_MOI_LEFT_kgm2);
-		
-		this.rollerLeft = new Motor("rollerLeft", leftRollerConfig);
+        this.rightMotor = new Motor("rightMotor", rightConfig);
 
-		MotorConfig rightRollerConfig = new MotorConfig(LEFT_MOTOR_ID)
-			.withCanbus(CANBUS_LEFT)
-			.withBrake(BRAKE_LEFT)
-			.withFoc(FOC_LEFT)
-			.withSensorToMechanismRatio(SENSOR_TO_MECHANISM_RATIO_LEFT)
-			.withPIDGains(kPLeft, kILeft, kDLeft, GRAVITY_LEFT)
-			.withMotionMagic(CRUISE_VELOCITY_LEFT_degps, ACCELERATION_LEFT_degps2, JERK_LEFT_degp3)
-			.withSim(DC_MOTOR_LEFT, GEARING_LEFT, SIM_MOI_LEFT_kgm2);
-		
-		this.rollerRight = new Motor("rollerRIght", rightRollerConfig);
-		
-		setCommand(Command.IDLE);
-	}
+        MotorConfig leftRollerConfig = new MotorConfig(LEFT_ROLLER_MOTOR_ID)
+            .withCanbus(CANBUS_LEFT)
+            .withInverted(INVERTED_ROLLER_LEFT)
+            .withBrake(BRAKE_ROLLER_LEFT)
+            .withFoc(FOC_ROLLER_LEFT)
+            .withMeasurementUnit(UNIT_ROLLER_LEFT)
+            .withSensorToMechanismRatio(SENSOR_TO_MECHANISM_RATIO_ROLLER_LEFT)
+            .withSim(DC_MOTOR_ROLLER_LEFT, GEARING_ROLLER_LEFT, SIM_MOI_ROLLER_LEFT_kgm2);
 
-	public static DualArm getInstance() {
-		if (instance == null) {
-			instance = new DualArm();
-		}
+        this.rollerLeft = new Motor("rollerLeft", leftRollerConfig);
 
-		return instance;
-	}
+        MotorConfig rightRollerConfig = new MotorConfig(RIGHT_ROLLER_MOTOR_ID)
+            .withCanbus(CANBUS_RIGHT)
+            .withInverted(INVERTED_ROLLER_RIGHT)
+            .withBrake(BRAKE_ROLLER_RIGHT)
+            .withFoc(FOC_ROLLER_RIGHT)
+            .withMeasurementUnit(UNIT_ROLLER_RIGHT)
+            .withSensorToMechanismRatio(SENSOR_TO_MECHANISM_RATIO_ROLLER_RIGHT)
+            .withSim(DC_MOTOR_ROLLER_RIGHT, GEARING_ROLLER_RIGHT, SIM_MOI_ROLLER_RIGHT_kgm2);
 
-	@Override
-	protected void inputPeriodic() {
-		leftMotor.readInputs();
-		rightMotor.readInputs();
-	}
+        this.rollerRight = new Motor("rollerRight", rightRollerConfig);
 
-	@Override
-	protected void handle() {
-		switch (getCommand()) {
-			case DISABLED:
+        setCommand(Command.IDLE);
+    }
+
+    public static DualArm getInstance() {
+        if (instance == null) {
+            instance = new DualArm();
+        }
+
+        return instance;
+    }
+
+    @Override
+    protected void inputPeriodic() {
+        leftMotor.readInputs();
+        rightMotor.readInputs();
+        rollerLeft.readInputs();
+        rollerRight.readInputs();
+    }
+
+    @Override
+    protected void handle() {
+        switch (getCommand()) {
+            case DISABLED:
 			case IDLE:
-				leftMotor.stop();
-				rightMotor.stop();
-				break;
-			case RAISE:
-				if (firstLoop()) {
-					setSubstate(Travel.PHASE_1);
-				}
+                leftMotor.stop();
+                rightMotor.stop();
+                rollerLeft.stop();
+                rollerRight.stop();
+                break;
+            case RAISE:
+                if (firstLoop()) {
+                    leftTarget_deg = RAISE_PHASE_2_THRESHOLD_deg;
+                    rightTarget_deg = rightMotor.getPosition();
+                    setSubstate(Travel.PHASE_1);
+                }
 
-				switch ((Travel) getSubstate()) {
-					case PHASE_1:
-						if (Util.inRange(RAISE_PHASE_2_THRESHOLD_deg, RAISE_TOLERANCE_deg)) {
-							setSubstate(Travel.PHASE_2);
-							break;
-						}
-						leftMotor.setMotionMagic(RAISE_PHASE_2_THRESHOLD_deg);
-						break;
-					case PHASE_2:
-						if (!Util.inRange(RAISE_PHASE_2_THRESHOLD_deg, RAISE_TOLERANCE_deg)) {
-							setSubstate(Travel.PHASE_1);
-							return;
-						}
+                switch ((Travel) getSubstate()) {
+                    case PHASE_1:
+                        leftMotor.setMotionMagic(leftTarget_deg);
+                        rightMotor.setMotionMagic(rightTarget_deg);
+                        if (atTarget(leftMotor, leftTarget_deg, RAISE_TOLERANCE_deg)) {
+                            setSubstate(Travel.PHASE_2);
+                        }
+                        break;
+                    case PHASE_2:
+                        rightTarget_deg = RAISE_FINAL_THRESHOLD_deg;
+                        leftMotor.setMotionMagic(leftTarget_deg);
+                        rightMotor.setMotionMagic(rightTarget_deg);
+                        if (atTarget(leftMotor, leftTarget_deg, RAISE_TOLERANCE_deg)
+                                && atTarget(rightMotor, rightTarget_deg, RAISE_TOLERANCE_deg)) {
+                            setCommand(Command.IDLE);
+                        }
+                        break;
+                    default:
+                        throw new IllegalArgumentException("DualArm: Unknown substate: " + getSubstate());
+                }
+                break;
+            case LOWER:
+                if (firstLoop()) {
+                    rightTarget_deg = LOWER_PHASE_2_THRESHOLD_deg;
+                    leftTarget_deg = leftMotor.getPosition();
+                    setSubstate(Travel.PHASE_1);
+                }
 
-						if (Util.inRange(RAISE_FINAL_THRESHOLD_deg, RAISE_TOLERANCE_deg)) {
-							setCommand(Command.IDLE);
-						}
-						rightMotor.setMotionMagic(RAISE_FINAL_THRESHOLD_deg);
-						break;
-					default:
-						throw new IllegalArgumentException("DualArm: Unknown substate: " + getSubstate());
-				}
-				break;
-			case LOWER:
-				if (firstLoop()) {
-					setSubstate(Travel.PHASE_1);
-				}
+                switch ((Travel) getSubstate()) {
+                    case PHASE_1:
+                        rightMotor.setMotionMagic(rightTarget_deg);
+                        leftMotor.setMotionMagic(leftTarget_deg);
+                        if (atTarget(rightMotor, rightTarget_deg, LOWER_TOLERANCE_deg)) {
+                            setSubstate(Travel.PHASE_2);
+                        }
+                        break;
+                    case PHASE_2:
+                        leftTarget_deg = LOWER_FINAL_THRESHOLD_deg;
+                        rightMotor.setMotionMagic(rightTarget_deg);
+                        leftMotor.setMotionMagic(leftTarget_deg);
+                        if (atTarget(rightMotor, rightTarget_deg, LOWER_TOLERANCE_deg)
+                                && atTarget(leftMotor, leftTarget_deg, LOWER_TOLERANCE_deg)) {
+                            setCommand(Command.IDLE);
+                        }
+                        break;
+                    default:
+                        throw new IllegalArgumentException("DualArm: Unknown substate: " + getSubstate());
+                }
+                break;
+            case INAKE:
+                rollerLeft.setVoltage(INTAKE_VOLTS);
+                rollerRight.setVoltage(INTAKE_VOLTS);
+                break;
+            case EXPEL:
+                rollerLeft.setVoltage(EXPEL_VOLTS);
+                rollerRight.setVoltage(EXPEL_VOLTS);
+                break;
+            default:
+                throw new IllegalArgumentException("DualArm: handling invalid state: " + getCommand());
+        }
+    }
 
-				switch ((Travel) getSubstate()) {
-					case PHASE_1:
-						if (Util.inRange(LOWER_PHASE_2_THRESHOLD_deg, LOWER_TOLERANCE_deg)) {
-							setSubstate(Travel.PHASE_2);
-							break;
-						}
-						leftMotor.setMotionMagic(LOWER_PHASE_2_THRESHOLD_deg);
-						break;
-					case PHASE_2:
-						if (!Util.inRange(LOWER_PHASE_2_THRESHOLD_deg, LOWER_TOLERANCE_deg)) {
-							setSubstate(Travel.PHASE_1);
-							return;
-						}
+    private boolean atTarget(Motor motor, double target_deg, double tolerance_deg) {
+        return Math.abs(motor.getPosition() - target_deg) <= tolerance_deg;
+    }
 
-						if (Util.inRange(LOWER_FINAL_THRESHOLD_deg, LOWER_TOLERANCE_deg)) {
-							setCommand(Command.IDLE);
-						}
-						rightMotor.setMotionMagic(LOWER_FINAL_THRESHOLD_deg);
-						break;
-					default:
-						throw new IllegalArgumentException("DualArm: Unknown substate: " + getSubstate());
-				}
-				break;
-			case INAKE:
-				
-				break;
-			case EXPEL:
-				break;
-			default:
-				throw new IllegalArgumentException("DualArm: handling invalid state: " + getCommand());
-		}
-	}
+    @Override
+    protected void outputPeriodic() {
+        leftAngle_deg = leftMotor.getPosition();
+        rightAngle_deg = rightMotor.getPosition();
 
-	@Override
-	protected void outputPeriodic() {
-		dualArm2d.setLeftArmAngle(leftAngle_deg);
-		dualArm2d.setRightArmAngle(rightAngle_deg);
-		dualArm2d.periodic();
+        dualArm2d.setLeftArmAngle(leftAngle_deg);
+        dualArm2d.setRightArmAngle(rightAngle_deg);
+        dualArm2d.setLeftRollerAngle(rollerLeft.getPosition());
+        dualArm2d.setRightRollerAngle(rollerRight.getPosition());
+        dualArm2d.periodic();
 
-		Logger.recordOutput("DualArm/LeftAngle_deg", leftAngle_deg);
-		Logger.recordOutput("DualArm/RightAngle_deg", rightAngle_deg);
-	}
+        Logger.recordOutput("DualArm/LeftAngle_deg", leftAngle_deg);
+        Logger.recordOutput("DualArm/RightAngle_deg", rightAngle_deg);
+    }
 
-	public void disable() {
-		setCommand(Command.DISABLED);
-	}
+    public void disable() {
+        setCommand(Command.DISABLED);
+    }
 
-	public void idle() {
-		setCommand(Command.IDLE);
-	}
+    public void idle() {
+        setCommand(Command.IDLE);
+    }
 
-	public void raise() {
-		setCommand(Command.RAISE);
-	}
+    public void raise() {
+        setCommand(Command.RAISE);
+    }
 
-	public void lower() {
-		setCommand(Command.LOWER);
-	}
+    public void lower() {
+        setCommand(Command.LOWER);
+    }
 
-	public void intake() {
-		setCommand(Command.INAKE);
-	}
+    public void intake() {
+        setCommand(Command.INAKE);
+    }
 
-	public void expel() {
-		setCommand(Command.EXPEL);
-	}
+    public void expel() {
+        setCommand(Command.EXPEL);
+    }
 }
